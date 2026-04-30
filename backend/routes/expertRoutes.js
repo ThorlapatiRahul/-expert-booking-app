@@ -1,12 +1,14 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
+
 const {
   getExperts,
+  getExpertById,
   createExpert,
-  getExpertById
 } = require("../controllers/expertController");
 
 router.get("/", getExperts);
-router.post("/", createExpert);
 router.get("/:id", getExpertById);
+router.post("/", createExpert);
 
 module.exports = router;

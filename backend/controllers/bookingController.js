@@ -1,11 +1,10 @@
 const Booking = require("../models/Booking");
 
-// ➕ Create Booking
+// POST /bookings
 exports.createBooking = async (req, res) => {
   try {
     const { expertId, date, time, name, email } = req.body;
 
-    // validation
     if (!expertId || !date || !time || !name || !email) {
       return res.status(400).json({
         message: "Missing required fields",
@@ -26,18 +25,18 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Booking failed ❌",
+    });
   }
 };
 
-// 🔎 Get Bookings
+// GET /bookings?email=
 exports.getBookings = async (req, res) => {
   try {
     const { email, expertId, date } = req.query;
 
     let filter = {};
-
     if (email) filter.email = email;
     if (expertId) filter.expertId = expertId;
     if (date) filter.date = date;
@@ -49,27 +48,23 @@ exports.getBookings = async (req, res) => {
 
     res.json(bookings);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Failed to fetch bookings" });
   }
 };
 
-// 🔄 Update Status
+// PATCH /bookings/:id/status
 exports.updateStatus = async (req, res) => {
   try {
+    const { status } = req.body;
+
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
-      { status: req.body.status },
+      { status },
       { new: true }
     );
 
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
     res.json(booking);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update booking" });
+    res.status(500).json({ message: "Failed to update status" });
   }
 };
