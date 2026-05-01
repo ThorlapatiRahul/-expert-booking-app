@@ -1,36 +1,26 @@
 import Expert from "../models/Expert.js";
 
-// GET ALL
-export const getExperts = async (req, res) => {
+// ADD
+export const addExpert = async (req, res) => {
   try {
-    const experts = await Expert.find().sort({ createdAt: -1 });
-    res.json(experts);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.log("📦 BODY:", req.body);
+
+    const expert = await Expert.create(req.body);
+
+    res.status(201).json(expert);
+  } catch (error) {
+    console.error("❌ ADD ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
-// CREATE
-export const createExpert = async (req, res) => {
+// GET
+export const getExperts = async (req, res) => {
   try {
-    const { name, category, experience, rating } = req.body;
-
-    if (!name || !category || !experience || !rating) {
-      return res.status(400).json({ message: "All fields required" });
-    }
-
-    const expert = new Expert({
-      name,
-      category,
-      experience,
-      rating,
-    });
-
-    const saved = await expert.save();
-
-    res.status(201).json(saved);
-  } catch (err) {
-    console.error("CREATE ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    const experts = await Expert.find();
+    res.json(experts);
+  } catch (error) {
+    console.error("❌ FETCH ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };

@@ -1,31 +1,43 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
 import expertRoutes from "./routes/expertRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 
+// load env
+dotenv.config();
+
 const app = express();
 
-// 🔥 VERY IMPORTANT (this was likely missing)
+// middleware
 app.use(express.json());
-
-// allow frontend
 app.use(cors());
 
 // routes
 app.use("/api", expertRoutes);
 app.use("/api", bookingRoutes);
 
-// DB connect
-mongoose
-  .connect(process.env.MONGO_URI || "your_mongodb_url_here")
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log(err));
+// DB connect (IMPORTANT)
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ Mongo Error:", err);
+    process.exit(1); // stop app if DB fails
+  }
+};
 
-// test route
-app.get("/", (req, res) => {
-  res.send("API running...");
-});
+// start server ONLY after DB connects
+const startServer = async () => {
+  await connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on ${PORT}`);
+  });
+};
+
+startServer();

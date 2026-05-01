@@ -2,16 +2,16 @@ import Booking from "../models/Booking.js";
 
 export const createBooking = async (req, res) => {
   try {
-    const { expertId, userName, userEmail, date, time } = req.body;
+    const { expertId, name, email, date, time } = req.body;
 
-    if (!expertId || !userName || !userEmail || !date || !time) {
-      return res.status(400).json({ message: "All fields required" });
+    if (!name || !email) {
+      return res.status(400).json({ message: "Missing fields" });
     }
 
     const booking = new Booking({
       expertId,
-      userName,
-      userEmail,
+      userName: name,     // ✅ FIX
+      userEmail: email,   // ✅ FIX
       date,
       time,
     });
@@ -20,7 +20,7 @@ export const createBooking = async (req, res) => {
 
     res.status(201).json(saved);
   } catch (err) {
-    console.error("BOOKING ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    console.error("❌ BOOKING ERROR:", err);
+    res.status(500).json({ message: "Booking failed" });
   }
 };
