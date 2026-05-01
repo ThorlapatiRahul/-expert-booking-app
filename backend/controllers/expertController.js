@@ -3,9 +3,10 @@ import Expert from "../models/Expert.js";
 // ADD EXPERT
 export const addExpert = async (req, res) => {
   try {
+    console.log("BODY:", req.body); // DEBUG
+
     const { name, category, experience, rating } = req.body;
 
-    // validation
     if (!name || !category) {
       return res.status(400).json({ message: "Missing fields" });
     }
@@ -19,21 +20,24 @@ export const addExpert = async (req, res) => {
 
     await expert.save();
 
-    res.status(201).json({ message: "Expert added", expert });
-  } catch (error) {
-    console.error("❌ ADD EXPERT ERROR:", error);
-    res.status(500).json({ message: "Error adding expert", error });
+    console.log("✅ SAVED:", expert);
+
+    res.status(201).json(expert);
+  } catch (err) {
+    console.error("❌ ADD ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// GET ALL EXPERTS
+// GET EXPERTS
 export const getExperts = async (req, res) => {
   try {
     const experts = await Expert.find();
+    console.log("📦 EXPERTS:", experts);
+
     res.json(experts);
-  } catch (error) {
-    console.error("❌ FETCH EXPERTS ERROR:", error);
-    res.status(500).json({ message: "Error fetching experts" });
+  } catch (err) {
+    console.error("❌ GET ERROR:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
