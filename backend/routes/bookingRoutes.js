@@ -1,14 +1,8 @@
-const express = require("express");
+import express from "express";
+import { createBooking } from "../controllers/bookingController.js";
+
 const router = express.Router();
 
-const {
-  createBooking,
-  getBookings,
-  updateStatus,
-} = require("../controllers/bookingController");
+router.post("/bookings", createBooking);
 
-router.post("/", createBooking);
-router.get("/", getBookings);
-router.patch("/:id/status", updateStatus);
-
-module.exports = router;
+export default router;

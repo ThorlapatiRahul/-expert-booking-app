@@ -1,43 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const bookingSchema = new mongoose.Schema(
-  {
-    expertId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Expert",
-      required: true,
-    },
-    name: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-    },
-    phone: String,
-    date: {
-      type: String,
-      required: true,
-    },
-    time: {
-      type: String,
-      required: true,
-    },
-    notes: String,
-    status: {
-      type: String,
-      enum: ["Pending", "Confirmed", "Completed"],
-      default: "Pending",
-    },
-  },
-  { timestamps: true }
-);
+const bookingSchema = new mongoose.Schema({
+  expertId: { type: mongoose.Schema.Types.ObjectId, ref: "Expert" },
+  userName: String,
+  userEmail: String,
+  date: String,
+  time: String,
+});
 
-// 🔥 CRITICAL: Prevent double booking
-bookingSchema.index(
-  { expertId: 1, date: 1, time: 1 },
-  { unique: true }
-);
-
-module.exports = mongoose.model("Booking", bookingSchema);
+export default mongoose.model("Booking", bookingSchema);

@@ -1,66 +1,71 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import API from "../services/api";
+import { useParams } from "react-router-dom";
 
-const BookingForm = ({ fetchExperts }) => {
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    experience: "",
-    rating: ""
-  });
+const BookingForm = () => {
+  const { id } = useParams(); // expertId
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
 
-  const addExpert = async () => {
+  const bookSession = async () => {
     try {
-      await API.post("/experts", form);
-      fetchExperts(); // refresh list
-      setForm({
-        name: "",
-        category: "",
-        experience: "",
-        rating: ""
+      const res = await API.post("/bookings", {
+        expertId: id,
+        userName: name,
+        userEmail: email,
+        date,
+        time,
       });
+
+      alert("Booking successful ✅");
+
+      setName("");
+      setEmail("");
+      setDate("");
+      setTime("");
+
     } catch (err) {
-      console.error(err);
+      console.error("BOOKING ERROR:", err.response?.data || err.message);
+      alert("Booking failed ❌");
     }
   };
 
   return (
-    <div className="form-container">
-      <h3>Add Expert</h3>
+    <div style={{ padding: "20px" }}>
+      <h2>Book Session</h2>
 
       <input
-        name="name"
-        placeholder="Name"
-        value={form.name}
-        onChange={handleChange}
+        placeholder="Your Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
+      <br /><br />
 
       <input
-        name="category"
-        placeholder="Category (Doctor, Mentor, etc)"
-        value={form.category}
-        onChange={handleChange}
+        placeholder="Your Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
+      <br /><br />
 
       <input
-        name="experience"
-        placeholder="Experience (years)"
-        value={form.experience}
-        onChange={handleChange}
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
       />
+      <br /><br />
 
       <input
-        name="rating"
-        placeholder="Rating (1-5)"
-        value={form.rating}
-        onChange={handleChange}
+        type="time"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
       />
+      <br /><br />
 
-      <button onClick={addExpert}>Add</button>
+      <button onClick={bookSession}>Book</button>
     </div>
   );
 };
