@@ -21,24 +21,21 @@ const ExpertList = () => {
   const [page, setPage] = useState(1);
   const limit = 3;
 
-  // 🔥 FETCH EXPERTS
+  // ✅ FETCH EXPERTS (SAFE)
   const fetchExperts = async () => {
     try {
       setLoading(true);
+      setError("");
 
       const res = await API.get("/experts");
 
-      console.log("EXPERT DATA:", res.data);
-
-      // 🔥 Handle both formats
       const data = Array.isArray(res.data)
         ? res.data
         : res.data?.data || [];
 
       setExperts(data);
-      setError("");
     } catch (err) {
-      console.error("FETCH ERROR:", err);
+      console.error(err);
       setError("Failed to load experts ❌");
       setExperts([]);
     } finally {
@@ -50,7 +47,7 @@ const ExpertList = () => {
     fetchExperts();
   }, []);
 
-  // 🔥 ADD EXPERT
+  // ✅ ADD EXPERT
   const addExpert = async () => {
     if (!name || !cat || !exp || !rating) {
       alert("Fill all fields");
@@ -77,9 +74,9 @@ const ExpertList = () => {
     }
   };
 
-  // 🔥 FILTER SAFE
-  const filtered = experts.filter((e) => {
-    if (!e?.name) return false;
+  // ✅ FILTER SAFE
+  const filtered = (experts || []).filter((e) => {
+    if (!e || !e.name) return false;
 
     return (
       e.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -87,7 +84,7 @@ const ExpertList = () => {
     );
   });
 
-  // 🔥 PAGINATION
+  // ✅ PAGINATION
   const start = (page - 1) * limit;
   const currentExperts = filtered.slice(start, start + limit);
 
@@ -153,7 +150,12 @@ const ExpertList = () => {
 
       {/* STATUS */}
       {loading && <p style={{ textAlign: "center" }}>Loading...</p>}
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>
+          {error}
+        </p>
+      )}
 
       {/* LIST */}
       <div className="list">
