@@ -1,7 +1,17 @@
-import axios from "axios";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ExpertList from "./components/ExpertList";
+import Booking from "./pages/Booking";
 
-const API = axios.create({
-  baseURL: "https://expert-booking-backend-4as6.onrender.com",
-});
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<ExpertList />} />
+        <Route path="/expert/:id" element={<Booking />} />
+      </Routes>
+    </Router>
+  );
+}
 
-export default API;
+export default App;
