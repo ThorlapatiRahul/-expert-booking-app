@@ -1,14 +1,9 @@
-const express = require("express");
+import express from "express";
+import { getExperts, createExpert } from "../controllers/expertController.js";
+
 const router = express.Router();
 
-const {
-  getExperts,
-  getExpertById,
-  createExpert,
-} = require("../controllers/expertController");
+router.get("/experts", getExperts);
+router.post("/experts", createExpert);
 
-router.get("/", getExperts);
-router.get("/:id", getExpertById);
-router.post("/", createExpert);
-
-module.exports = router;
+export default router;

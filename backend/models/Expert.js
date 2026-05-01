@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const expertSchema = new mongoose.Schema(
   {
@@ -10,4 +10,4 @@ const expertSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Expert", expertSchema);
+export default mongoose.model("Expert", expertSchema);
