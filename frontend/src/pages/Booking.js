@@ -3,64 +3,51 @@ import { useParams } from "react-router-dom";
 import API from "../services/api";
 
 const Booking = () => {
-  const { id } = useParams(); // expertId from URL
+  const { id } = useParams(); // 🔥 expertId from URL
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    notes: "",
-  });
-
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const bookSlot = async () => {
-    setError("");
-    setSuccess("");
-
-    // 🔥 Frontend validation
-    if (!form.name || !form.email || !date || !time) {
-      setError("Please fill all required fields");
+  const handleBooking = async () => {
+    if (!name || !email || !date || !time) {
+      setMessage("Please fill all required fields ❌");
       return;
     }
 
     try {
-      const res = await fetch(`${API}/api/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          expertId: id,        // 🔥 REQUIRED
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          notes: form.notes,
-          date: date,          // 🔥 REQUIRED
-          time: time,          // 🔥 REQUIRED
-        }),
+      const res = await API.post("/bookings", {
+        expertId: id, // 🔥 VERY IMPORTANT
+        name,
+        email,
+        phone,
+        date,
+        time,
+        notes,
       });
 
-      const data = await res.json();
+      setMessage("Booking successful 🎉");
 
-      if (!res.ok) {
-        setError(data.message || "Booking failed ❌");
-      } else {
-        setSuccess("Booking successful 🎉");
-        setForm({ name: "", email: "", phone: "", notes: "" });
-        setDate("");
-        setTime("");
-      }
+      // reset form
+      setName("");
+      setEmail("");
+      setPhone("");
+      setDate("");
+      setTime("");
+      setNotes("");
     } catch (err) {
-      setError("Server error");
+      console.error(err);
+
+      if (err.response?.data?.message) {
+        setMessage(err.response.data.message);
+      } else {
+        setMessage("Booking failed ❌");
+      }
     }
   };
 
@@ -69,54 +56,52 @@ const Booking = () => {
       <h2>Book Session</h2>
 
       <input
-        name="name"
         placeholder="Name"
-        value={form.name}
-        onChange={handleChange}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
 
       <input
-        name="email"
         placeholder="Email"
-        value={form.email}
-        onChange={handleChange}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
 
       <input
-        name="phone"
         placeholder="Phone"
-        value={form.phone}
-        onChange={handleChange}
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
       />
 
-      {/* 🔥 NEW: DATE */}
+      {/* 🔥 NEW FIELDS */}
       <input
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
       />
 
-      {/* 🔥 NEW: TIME */}
-      <select value={time} onChange={(e) => setTime(e.target.value)}>
-        <option value="">Select Time</option>
-        <option value="10:00 AM">10:00 AM</option>
-        <option value="11:00 AM">11:00 AM</option>
-        <option value="12:00 PM">12:00 PM</option>
-      </select>
-
-      <textarea
-        name="notes"
-        placeholder="Notes"
-        value={form.notes}
-        onChange={handleChange}
+      <input
+        type="time"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
       />
 
-      <br /><br />
+      <textarea
+        placeholder="Notes"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
 
-      <button onClick={bookSlot}>Book Now</button>
+      <br />
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {success && <p style={{ color: "green" }}>{success}</p>}
+      <button onClick={handleBooking}>Book Now</button>
+
+      {/* MESSAGE */}
+      {message && (
+        <p style={{ color: message.includes("successful") ? "green" : "red" }}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };

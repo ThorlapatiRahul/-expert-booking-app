@@ -7,7 +7,7 @@ const ExpertList = () => {
   const navigate = useNavigate();
 
   const [experts, setExperts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
@@ -18,30 +18,29 @@ const ExpertList = () => {
   const [exp, setExp] = useState("");
   const [rating, setRating] = useState("");
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const expertsPerPage = 3;
+  const [page, setPage] = useState(1);
+  const limit = 3;
 
   // 🔥 FETCH EXPERTS
   const fetchExperts = async () => {
     try {
       setLoading(true);
-      setError("");
 
       const res = await API.get("/experts");
 
-      if (!res.data) throw new Error("No data");
+      console.log("EXPERT DATA:", res.data);
 
-      setExperts(res.data);
+      // 🔥 Handle both formats
+      const data = Array.isArray(res.data)
+        ? res.data
+        : res.data?.data || [];
+
+      setExperts(data);
+      setError("");
     } catch (err) {
       console.error("FETCH ERROR:", err);
-
-      if (err.response) {
-        setError(err.response.data?.message || "Server error ❌");
-      } else if (err.request) {
-        setError("Backend is waking up... try again ⏳");
-      } else {
-        setError("Something went wrong ❌");
-      }
+      setError("Failed to load experts ❌");
+      setExperts([]);
     } finally {
       setLoading(false);
     }
@@ -58,11 +57,6 @@ const ExpertList = () => {
       return;
     }
 
-    if (Number(exp) < 0 || Number(rating) < 1 || Number(rating) > 5) {
-      alert("Invalid experience or rating");
-      return;
-    }
-
     try {
       await API.post("/experts", {
         name,
@@ -71,7 +65,6 @@ const ExpertList = () => {
         rating: Number(rating),
       });
 
-      // reset form
       setName("");
       setCat("");
       setExp("");
@@ -79,13 +72,15 @@ const ExpertList = () => {
 
       fetchExperts();
     } catch (err) {
-      console.error("ADD ERROR:", err);
+      console.error(err);
       alert("Error adding expert ❌");
     }
   };
 
-  // 🔥 FILTER
-  const filteredExperts = experts.filter((e) => {
+  // 🔥 FILTER SAFE
+  const filtered = experts.filter((e) => {
+    if (!e?.name) return false;
+
     return (
       e.name.toLowerCase().includes(search.toLowerCase()) &&
       (category === "" || e.category === category)
@@ -93,12 +88,11 @@ const ExpertList = () => {
   });
 
   // 🔥 PAGINATION
-  const indexOfLast = currentPage * expertsPerPage;
-  const indexOfFirst = indexOfLast - expertsPerPage;
-  const currentExperts = filteredExperts.slice(indexOfFirst, indexOfLast);
+  const start = (page - 1) * limit;
+  const currentExperts = filtered.slice(start, start + limit);
 
   useEffect(() => {
-    setCurrentPage(1);
+    setPage(1);
   }, [search, category]);
 
   return (
@@ -116,21 +110,21 @@ const ExpertList = () => {
         />
 
         <input
-          placeholder="Category (AI, Web Dev...)"
+          placeholder="Category"
           value={cat}
           onChange={(e) => setCat(e.target.value)}
         />
 
         <input
           type="number"
-          placeholder="Experience (years)"
+          placeholder="Experience"
           value={exp}
           onChange={(e) => setExp(e.target.value)}
         />
 
         <input
           type="number"
-          placeholder="Rating (1-5)"
+          placeholder="Rating"
           value={rating}
           onChange={(e) => setRating(e.target.value)}
         />
@@ -141,7 +135,7 @@ const ExpertList = () => {
       {/* SEARCH + FILTER */}
       <div className="controls">
         <input
-          placeholder="Search by name..."
+          placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -175,28 +169,28 @@ const ExpertList = () => {
             style={{ cursor: "pointer" }}
           >
             <h3>{e.name}</h3>
-            <p>📂 Category: {e.category}</p>
-            <p>🧠 Experience: {e.experience} years</p>
-            <p>⭐ Rating: {e.rating}</p>
+            <p>📂 {e.category}</p>
+            <p>🧠 {e.experience} years</p>
+            <p>⭐ {e.rating}</p>
           </div>
         ))}
       </div>
 
       {/* PAGINATION */}
-      {!loading && filteredExperts.length > expertsPerPage && (
+      {filtered.length > limit && (
         <div className="pagination">
           <button
-            onClick={() => setCurrentPage(currentPage - 1)}
-            disabled={currentPage === 1}
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
           >
             Prev
           </button>
 
-          <span> Page {currentPage} </span>
+          <span>Page {page}</span>
 
           <button
-            onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={indexOfLast >= filteredExperts.length}
+            disabled={start + limit >= filtered.length}
+            onClick={() => setPage(page + 1)}
           >
             Next
           </button>
