@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
 const expertSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  category: { type: String, required: true },
-  experience: { type: Number, required: true },
-  rating: { type: Number, required: true },
+  name: String,
+  category: String,
+  experience: Number,
+  rating: Number,
 });
 
 export default mongoose.model("Expert", expertSchema);
