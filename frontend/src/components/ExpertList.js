@@ -7,7 +7,7 @@ const ExpertList = () => {
   const navigate = useNavigate();
 
   const [experts, setExperts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
@@ -21,33 +21,44 @@ const ExpertList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const expertsPerPage = 3;
 
-  // 🔥 Fetch Experts
-  useEffect(() => {
-    fetchExperts();
-  }, []);
-
+  // 🔥 FETCH EXPERTS
   const fetchExperts = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/experts");
-      setExperts(res.data);
       setError("");
+
+      const res = await API.get("/experts");
+
+      if (!res.data) throw new Error("No data");
+
+      setExperts(res.data);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load experts ❌");
+      console.error("FETCH ERROR:", err);
+
+      if (err.response) {
+        setError(err.response.data?.message || "Server error ❌");
+      } else if (err.request) {
+        setError("Backend is waking up... try again ⏳");
+      } else {
+        setError("Something went wrong ❌");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔥 Add Expert
+  useEffect(() => {
+    fetchExperts();
+  }, []);
+
+  // 🔥 ADD EXPERT
   const addExpert = async () => {
     if (!name || !cat || !exp || !rating) {
       alert("Fill all fields");
       return;
     }
 
-    if (exp < 0 || rating < 1 || rating > 5) {
+    if (Number(exp) < 0 || Number(rating) < 1 || Number(rating) > 5) {
       alert("Invalid experience or rating");
       return;
     }
@@ -56,10 +67,11 @@ const ExpertList = () => {
       await API.post("/experts", {
         name,
         category: cat,
-        experience: exp,
-        rating,
+        experience: Number(exp),
+        rating: Number(rating),
       });
 
+      // reset form
       setName("");
       setCat("");
       setExp("");
@@ -67,17 +79,12 @@ const ExpertList = () => {
 
       fetchExperts();
     } catch (err) {
-      console.error(err);
-      alert("Error adding expert");
+      console.error("ADD ERROR:", err);
+      alert("Error adding expert ❌");
     }
   };
 
-  // 🔥 Reset page when filtering
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, category]);
-
-  // 🔥 Filter Logic
+  // 🔥 FILTER
   const filteredExperts = experts.filter((e) => {
     return (
       e.name.toLowerCase().includes(search.toLowerCase()) &&
@@ -85,16 +92,20 @@ const ExpertList = () => {
     );
   });
 
-  // 🔥 Pagination
+  // 🔥 PAGINATION
   const indexOfLast = currentPage * expertsPerPage;
   const indexOfFirst = indexOfLast - expertsPerPage;
   const currentExperts = filteredExperts.slice(indexOfFirst, indexOfLast);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category]);
 
   return (
     <div className="container">
       <h1>🚀 Expert Booking App</h1>
 
-      {/* 🔥 Add Expert */}
+      {/* ADD EXPERT */}
       <div className="card">
         <h2>Add Expert</h2>
 
@@ -111,15 +122,15 @@ const ExpertList = () => {
         />
 
         <input
-          placeholder="Experience (years)"
           type="number"
+          placeholder="Experience (years)"
           value={exp}
           onChange={(e) => setExp(e.target.value)}
         />
 
         <input
-          placeholder="Rating (1-5)"
           type="number"
+          placeholder="Rating (1-5)"
           value={rating}
           onChange={(e) => setRating(e.target.value)}
         />
@@ -127,7 +138,7 @@ const ExpertList = () => {
         <button onClick={addExpert}>Add Expert</button>
       </div>
 
-      {/* 🔥 Search + Filter */}
+      {/* SEARCH + FILTER */}
       <div className="controls">
         <input
           placeholder="Search by name..."
@@ -146,11 +157,11 @@ const ExpertList = () => {
         </select>
       </div>
 
-      {/* 🔥 Loading + Error */}
-      {loading && <p style={{ textAlign: "center" }}>Loading experts...</p>}
+      {/* STATUS */}
+      {loading && <p style={{ textAlign: "center" }}>Loading...</p>}
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
-      {/* 🔥 Expert List */}
+      {/* LIST */}
       <div className="list">
         {!loading && currentExperts.length === 0 && (
           <p style={{ textAlign: "center" }}>No experts found</p>
@@ -171,7 +182,7 @@ const ExpertList = () => {
         ))}
       </div>
 
-      {/* 🔥 Pagination */}
+      {/* PAGINATION */}
       {!loading && filteredExperts.length > expertsPerPage && (
         <div className="pagination">
           <button

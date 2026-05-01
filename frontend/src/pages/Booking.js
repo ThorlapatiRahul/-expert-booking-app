@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useParams } from "react-router-dom";
 import API from "../services/api";
 
-const Booking = ({ expertId, selectedDate, selectedSlot }) => {
+const Booking = () => {
+  const { id } = useParams(); // expertId from URL
 
   const [form, setForm] = useState({
     name: "",
@@ -10,116 +12,113 @@ const Booking = ({ expertId, selectedDate, selectedSlot }) => {
     notes: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const bookSlot = async () => {
-    try {
-      setLoading(true);
+    setError("");
+    setSuccess("");
 
-      await API.post("/bookings", {
-        expertId,
-        date: selectedDate,
-        time: selectedSlot,
-        ...form,
+    // 🔥 Frontend validation
+    if (!form.name || !form.email || !date || !time) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API}/api/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expertId: id,        // 🔥 REQUIRED
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          notes: form.notes,
+          date: date,          // 🔥 REQUIRED
+          time: time,          // 🔥 REQUIRED
+        }),
       });
 
-      setMessage("Booking successful 🎉");
-      setError("");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Booking failed ❌");
+      } else {
+        setSuccess("Booking successful 🎉");
+        setForm({ name: "", email: "", phone: "", notes: "" });
+        setDate("");
+        setTime("");
+      }
     } catch (err) {
-      setError("Booking failed ❌");
-    } finally {
-      setLoading(false);
+      setError("Server error");
     }
   };
 
   return (
-    <div style={styles.card}>
+    <div style={{ padding: "20px" }}>
       <h2>Book Session</h2>
 
       <input
         name="name"
         placeholder="Name"
+        value={form.name}
         onChange={handleChange}
-        style={styles.input}
       />
 
       <input
         name="email"
         placeholder="Email"
+        value={form.email}
         onChange={handleChange}
-        style={styles.input}
       />
 
       <input
         name="phone"
         placeholder="Phone"
+        value={form.phone}
         onChange={handleChange}
-        style={styles.input}
       />
+
+      {/* 🔥 NEW: DATE */}
+      <input
+        type="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+      />
+
+      {/* 🔥 NEW: TIME */}
+      <select value={time} onChange={(e) => setTime(e.target.value)}>
+        <option value="">Select Time</option>
+        <option value="10:00 AM">10:00 AM</option>
+        <option value="11:00 AM">11:00 AM</option>
+        <option value="12:00 PM">12:00 PM</option>
+      </select>
 
       <textarea
         name="notes"
         placeholder="Notes"
+        value={form.notes}
         onChange={handleChange}
-        style={styles.textarea}
       />
 
-      {error && <p style={styles.error}>{error}</p>}
-      {message && <p style={styles.success}>{message}</p>}
+      <br /><br />
 
-      <button onClick={bookSlot} style={styles.button}>
-        {loading ? "Booking..." : "Book Now"}
-      </button>
+      <button onClick={bookSlot}>Book Now</button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {success && <p style={{ color: "green" }}>{success}</p>}
     </div>
   );
 };
 
 export default Booking;
-
-
-// 🔥 ADD HERE (bottom of file)
-const styles = {
-  card: {
-    marginTop: "20px",
-    padding: "20px",
-    borderRadius: "12px",
-    background: "rgba(255,255,255,0.9)",
-    boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    margin: "10px 0",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-  },
-  textarea: {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    margin: "10px 0",
-  },
-  button: {
-    background: "#ff6b6b",
-    color: "#fff",
-    padding: "10px 20px",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-  },
-  error: {
-    color: "red",
-    marginTop: "10px",
-  },
-  success: {
-    color: "green",
-    marginTop: "10px",
-  },
-};
