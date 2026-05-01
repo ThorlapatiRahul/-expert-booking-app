@@ -1,81 +1,218 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
+import "./ExpertList.css";
 
 const ExpertList = () => {
   const navigate = useNavigate();
 
   const [experts, setExperts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔥 Fetch Experts
-  useEffect(() => {
-    const fetchExperts = async () => {
-      try {
-        const res = await API.get("/experts");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
 
-        // safety check
-        if (Array.isArray(res.data)) {
-          setExperts(res.data);
-        } else {
-          setExperts([]);
-        }
+  const [name, setName] = useState("");
+  const [cat, setCat] = useState("");
+  const [exp, setExp] = useState("");
+  const [rating, setRating] = useState("");
 
-      } catch (err) {
-        console.error("Fetch Error:", err);
-        setError(err?.message || "Failed to load experts");
-      } finally {
-        setLoading(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const expertsPerPage = 3;
+
+  // ✅ FETCH EXPERTS (SAFE VERSION)
+  const fetchExperts = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await API.get("/experts");
+
+      // 🔥 handle all backend formats
+      if (Array.isArray(res.data)) {
+        setExperts(res.data);
+      } else if (Array.isArray(res.data.experts)) {
+        setExperts(res.data.experts);
+      } else {
+        console.log("Unexpected API response:", res.data);
+        setExperts([]);
       }
-    };
 
+    } catch (err) {
+      console.error("FETCH ERROR:", err);
+
+      if (err.response) {
+        setError(err.response.data?.message || "Server error ❌");
+      } else if (err.request) {
+        setError("Backend waking up... wait few sec ⏳");
+      } else {
+        setError("Something went wrong ❌");
+      }
+
+      setExperts([]); // prevent crash
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchExperts();
   }, []);
 
+  // ✅ ADD EXPERT
+  const addExpert = async () => {
+    if (!name || !cat || !exp || !rating) {
+      alert("Fill all fields");
+      return;
+    }
+
+    if (Number(exp) < 0 || Number(rating) < 1 || Number(rating) > 5) {
+      alert("Invalid values");
+      return;
+    }
+
+    try {
+      await API.post("/experts", {
+        name,
+        category: cat,
+        experience: Number(exp),
+        rating: Number(rating),
+      });
+
+      setName("");
+      setCat("");
+      setExp("");
+      setRating("");
+
+      fetchExperts();
+    } catch (err) {
+      console.error("ADD ERROR:", err);
+      alert("Error adding expert ❌");
+    }
+  };
+
+  // ✅ FILTER SAFE
+  const filteredExperts = Array.isArray(experts)
+    ? experts.filter((e) => {
+        return (
+          e.name?.toLowerCase().includes(search.toLowerCase()) &&
+          (category === "" || e.category === category)
+        );
+      })
+    : [];
+
+  // ✅ PAGINATION
+  const indexOfLast = currentPage * expertsPerPage;
+  const indexOfFirst = indexOfLast - expertsPerPage;
+  const currentExperts = filteredExperts.slice(indexOfFirst, indexOfLast);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category]);
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="container">
       <h1>🚀 Expert Booking App</h1>
 
-      {/* LOADING */}
-      {loading && <p>Loading...</p>}
+      {/* ADD EXPERT */}
+      <div className="card">
+        <h2>Add Expert</h2>
 
-      {/* ERROR SAFE */}
-      {!loading && error && (
-        <p style={{ color: "red" }}>
-          {typeof error === "string" ? error : "Something went wrong"}
-        </p>
-      )}
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-      {/* EMPTY */}
-      {!loading && experts.length === 0 && !error && (
-        <p>No experts found</p>
-      )}
+        <input
+          placeholder="Category (AI, Web Dev...)"
+          value={cat}
+          onChange={(e) => setCat(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Experience"
+          value={exp}
+          onChange={(e) => setExp(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Rating (1-5)"
+          value={rating}
+          onChange={(e) => setRating(e.target.value)}
+        />
+
+        <button onClick={addExpert}>Add Expert</button>
+      </div>
+
+      {/* SEARCH */}
+      <div className="controls">
+        <input
+          placeholder="Search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
+          <option value="">All</option>
+          <option value="AI">AI</option>
+          <option value="Web Dev">Web Dev</option>
+          <option value="ML">ML</option>
+        </select>
+      </div>
+
+      {/* STATUS */}
+      {loading && <p style={{ textAlign: "center" }}>Loading...</p>}
+      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
       {/* LIST */}
-      {!loading &&
-        experts.length > 0 &&
-        experts.map((e) => {
-          if (!e || typeof e !== "object") return null;
+      <div className="list">
+        {!loading && currentExperts.length === 0 && (
+          <p style={{ textAlign: "center" }}>No experts found</p>
+        )}
 
-          return (
+        {Array.isArray(currentExperts) &&
+          currentExperts.map((e) => (
             <div
-              key={e._id || Math.random()}
+              key={e._id}
+              className="expert-card"
               onClick={() => navigate(`/expert/${e._id}`)}
-              style={{
-                border: "1px solid #ccc",
-                padding: "10px",
-                marginBottom: "10px",
-                cursor: "pointer",
-              }}
+              style={{ cursor: "pointer" }}
             >
-              <h3>{e.name || "No Name"}</h3>
-              <p>Category: {e.category || "N/A"}</p>
-              <p>Experience: {e.experience || 0} years</p>
-              <p>⭐ {e.rating || 0}</p>
+              <h3>{e.name}</h3>
+              <p>📂 {e.category}</p>
+              <p>🧠 {e.experience} years</p>
+              <p>⭐ {e.rating}</p>
             </div>
-          );
-        })}
+          ))}
+      </div>
+
+      {/* PAGINATION */}
+      {!loading && filteredExperts.length > expertsPerPage && (
+        <div className="pagination">
+          <button
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={currentPage === 1}
+          >
+            Prev
+          </button>
+
+          <span> Page {currentPage} </span>
+
+          <button
+            onClick={() => setCurrentPage((p) => p + 1)}
+            disabled={indexOfLast >= filteredExperts.length}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
